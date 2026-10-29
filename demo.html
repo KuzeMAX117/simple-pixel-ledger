@@ -714,6 +714,150 @@ body.theme-dark .pl-modal {
   display: block;
 }
 
+/* ============ 容器自适应：窄宽度（Obsidian 侧边栏）贴合边界 ============ */
+.pl-view,
+.pl-block {
+  container-type: inline-size;
+}
+.pl-view {
+  width: 100%;
+  max-width: none;
+  overflow-x: hidden;
+}
+.pl-entry-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pl-day-net {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.pl-detail-total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 6px;
+}
+.pl-group-meta {
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 较窄（≤560px：半屏/窄面板） */
+@container (max-width: 560px) {
+  .pl-day {
+    min-height: 46px;
+    padding: 3px 4px;
+  }
+  .pl-day-net {
+    font-size: 7px;
+    margin-top: 2px;
+  }
+  .pl-stat {
+    padding: 6px 8px;
+  }
+  .pl-stat-value {
+    font-size: 12px;
+  }
+  .pl-entry-sign {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+  .pl-form-wrap,
+  .pl-detail-wrap,
+  .pl-block {
+    padding: 6px 8px;
+  }
+  .pl-cb {
+    flex-basis: 84px;
+    min-width: 60px;
+  }
+  .pl-seg-btn {
+    padding: 4px 10px;
+  }
+}
+
+/* 很窄（≤360px：Obsidian 侧边栏典型宽度） */
+@container (max-width: 360px) {
+  .pl-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pl-cal {
+    gap: 2px;
+  }
+  .pl-day {
+    min-height: 34px;
+    padding: 1px 2px;
+    border-width: 1px;
+  }
+  .pl-day-num {
+    font-size: 7px;
+  }
+  .pl-day-net {
+    font-size: 6px;
+    margin-top: 1px;
+  }
+  .pl-day-sub {
+    font-size: 7px;
+    right: 2px;
+    top: 2px;
+  }
+  .pl-wd {
+    font-size: 9px;
+    padding: 1px 0;
+  }
+  .pl-detail-total-label {
+    display: block;
+  }
+  .pl-amount {
+    flex: 1 1 100%;
+  }
+  .pl-save-row {
+    justify-content: stretch;
+  }
+  .pl-btn-primary {
+    width: 100%;
+  }
+  .pl-entry {
+    gap: 6px;
+    padding: 4px 4px;
+  }
+  .pl-entry-title {
+    font-size: 12px;
+  }
+  .pl-entry-sign {
+    font-size: 10px;
+  }
+  .pl-group-head {
+    font-size: 12px;
+    padding: 5px 6px;
+  }
+  .pl-group-meta {
+    font-size: 11px;
+    max-width: 96px;
+  }
+  .pl-detail-title {
+    font-size: 12px;
+  }
+  .pl-form-caption,
+  .pl-title {
+    font-size: 12px;
+  }
+  .pl-cat,
+  .pl-detail {
+    flex: 1 1 60px;
+    min-width: 0;
+  }
+  .pl-chip {
+    padding: 2px 6px;
+    font-size: 8px;
+  }
+}
+
 /* 演示页确认弹层（模拟插件内 Obsidian 确认弹窗） */
 .pl-demo-mask {
   position: fixed; inset: 0;
