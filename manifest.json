@@ -1,0 +1,10 @@
+{
+  "id": "pixel-ledger",
+  "name": "Pixel Ledger 像素账本",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "在日记或任意笔记中记录收支：分类/明细/金额支持常用预设，自动汇总当天总额；独立视图提供月历红绿盈亏统计（红=支出/负收入，绿=收入/正收入），数字采用像素风字体。",
+  "author": "pixel-ledger",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}

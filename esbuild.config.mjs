@@ -1,0 +1,42 @@
+import esbuild from "esbuild";
+import process from "process";
+import builtins from "builtin-modules";
+
+const banner = `/* Pixel Ledger 像素账本 1.0.0 | OFL: Press Start 2P font embedded in styles.css */`;
+
+const prod = process.argv[2] === "production";
+
+const ctx = await esbuild.context({
+  banner: { js: banner },
+  entryPoints: ["main.ts"],
+  bundle: true,
+  external: [
+    "obsidian",
+    "electron",
+    "@codemirror/autocomplete",
+    "@codemirror/collab",
+    "@codemirror/commands",
+    "@codemirror/language",
+    "@codemirror/lint",
+    "@codemirror/search",
+    "@codemirror/state",
+    "@codemirror/view",
+    "@lezer/common",
+    "@lezer/highlight",
+    "@lezer/lr",
+    ...builtins,
+  ],
+  format: "cjs",
+  target: "es2018",
+  logLevel: "info",
+  sourcemap: prod ? false : "inline",
+  treeShaking: true,
+  outfile: "main.js",
+});
+
+if (prod) {
+  await ctx.rebuild();
+  process.exit(0);
+} else {
+  await ctx.watch();
+}
