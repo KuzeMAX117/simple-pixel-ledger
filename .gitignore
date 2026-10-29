@@ -1,3 +1,5 @@
 node_modules/
 *.b64
 .DS_Store
+# 个人账目数据，禁止提交
+data.json

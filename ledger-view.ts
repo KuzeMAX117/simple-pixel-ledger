@@ -122,7 +122,10 @@ export class LedgerView extends ItemView {
     const prefix = `${year}-${pad(month + 1)}`;
     const monthEntries = this.plugin.data.entries.filter((e) => e.date.startsWith(prefix));
     const t = totalsOf(monthEntries);
-    renderSummaryStrip(root, t.income, t.expense);
+    // 关键修复：先建独立容器再渲染，renderSummaryStrip 会 empty 掉传入节点，
+    // 之前直接传视图根节点导致头部被清空、视图根被错误加上 pl-strip 类（列换行遮住下方板块）
+    const strip = root.createDiv({ cls: "pl-strip" });
+    renderSummaryStrip(strip, t.income, t.expense);
   }
 
   private renderCalendar(root: HTMLElement): void {

@@ -581,7 +581,8 @@ var LedgerView = class extends import_obsidian4.ItemView {
     const prefix = `${year}-${pad(month + 1)}`;
     const monthEntries = this.plugin.data.entries.filter((e) => e.date.startsWith(prefix));
     const t = totalsOf(monthEntries);
-    renderSummaryStrip(root, t.income, t.expense);
+    const strip = root.createDiv({ cls: "pl-strip" });
+    renderSummaryStrip(strip, t.income, t.expense);
   }
   renderCalendar(root) {
     var _a;
