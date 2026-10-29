@@ -89,6 +89,9 @@ function deepMergePresets(p) {
 }
 
 // ledger-block.ts
+var import_obsidian3 = require("obsidian");
+
+// ledger-modal.ts
 var import_obsidian2 = require("obsidian");
 
 // combo.ts
@@ -305,7 +308,7 @@ function renderEntryList(root, entries, opts = {}) {
     if (opts.onDelete) {
       const del = row.createEl("button", { cls: "pl-del", attr: { "aria-label": "\u5220\u9664" } });
       del.setText("\xD7");
-      del.addEventListener("click", () => opts.onDelete(e.id));
+      del.addEventListener("click", () => opts.onDelete(e));
     }
   }
 }
@@ -321,6 +324,79 @@ function renderSummaryStrip(root, income, expense) {
   block("\u6536\u5165", income, "pl-pos");
   block("\u7ED3\u4F59", income - expense, moneyClass(income - expense));
 }
+
+// ledger-modal.ts
+var QuickAddModal = class extends import_obsidian2.Modal {
+  constructor(plugin, date) {
+    super(plugin.app);
+    this.plugin = plugin;
+    this.date = date != null ? date : todayStr();
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.addClass("pl-modal");
+    contentEl.createDiv({ cls: "pl-modal-title" }).setText("\u5FEB\u901F\u8BB0\u4E00\u7B14");
+    new import_obsidian2.Setting(contentEl).setName("\u65E5\u671F").setDesc("\u9ED8\u8BA4\u4ECA\u5929\uFF0C\u53EF\u6539\u6210\u8FC7\u53BB\u7684\u65E5\u671F\u7528\u4E8E\u8865\u5F55").addText((t) => {
+      t.setValue(this.date);
+      t.inputEl.type = "date";
+      t.onChange((v) => {
+        if (v)
+          this.date = v;
+      });
+    });
+    const form = contentEl.createDiv({ cls: "pl-modal-form" });
+    renderQuickForm(form, {
+      presets: this.plugin.data.presets,
+      onSave: (r) => {
+        this.plugin.addEntry({ ...r, date: this.date });
+        this.close();
+      }
+    });
+  }
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
+  }
+};
+var ConfirmDeleteModal = class extends import_obsidian2.Modal {
+  constructor(plugin, entry, onConfirm) {
+    super(plugin.app);
+    this.plugin = plugin;
+    this.entry = entry;
+    this.onConfirm = onConfirm;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.addClass("pl-modal");
+    contentEl.createDiv({ cls: "pl-modal-title" }).setText("\u5220\u9664\u8FD9\u6761\u8BB0\u5F55\uFF1F");
+    const e = this.entry;
+    const preview = contentEl.createDiv({ cls: "pl-del-preview" });
+    const sign = preview.createDiv({
+      cls: "pl-del-sign pl-num " + (e.type === "income" ? "pl-pos" : "pl-neg")
+    });
+    sign.setText(e.type === "income" ? "+" + fmtMoney(e.amount) : "-" + fmtMoney(e.amount));
+    const info = preview.createDiv({ cls: "pl-del-info" });
+    info.createDiv({ cls: "pl-del-title" }).setText(
+      [e.category, e.detail].filter(Boolean).join(" \xB7 ") || "\u672A\u5206\u7C7B"
+    );
+    if (e.note)
+      info.createDiv({ cls: "pl-del-note" }).setText(e.note);
+    info.createDiv({ cls: "pl-del-date" }).setText("\u65E5\u671F\uFF1A" + e.date);
+    contentEl.createDiv({ cls: "pl-del-tip" }).setText("\u5220\u9664\u540E\u4E0D\u53EF\u6062\u590D\u3002");
+    const btnRow = contentEl.createDiv({ cls: "pl-del-btns" });
+    const cancel = btnRow.createEl("button", { cls: "pl-btn", text: "\u53D6\u6D88" });
+    cancel.addEventListener("click", () => this.close());
+    const confirm = btnRow.createEl("button", { cls: "pl-btn pl-btn-danger", text: "\u786E\u8BA4\u5220\u9664" });
+    confirm.addEventListener("click", () => {
+      this.onConfirm();
+      this.close();
+    });
+  }
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
+  }
+};
 
 // ledger-block.ts
 var BLOCK_TAG = "pixel-ledger";
@@ -341,7 +417,7 @@ function registerLedgerBlock(plugin) {
     ctx.addChild(renderer);
   });
 }
-var LedgerBlockRenderer = class extends import_obsidian2.MarkdownRenderChild {
+var LedgerBlockRenderer = class extends import_obsidian3.MarkdownRenderChild {
   constructor(containerEl, plugin, date) {
     super(containerEl);
     this.changeRef = () => {
@@ -368,7 +444,7 @@ var LedgerBlockRenderer = class extends import_obsidian2.MarkdownRenderChild {
     renderSummaryStrip(strip, t.income, t.expense);
     const listWrap = root.createDiv({ cls: "pl-block-list" });
     renderEntryList(listWrap, entries, {
-      onDelete: (id) => this.plugin.removeEntry(id)
+      onDelete: (entry) => new ConfirmDeleteModal(this.plugin, entry, () => this.plugin.removeEntry(entry.id)).open()
     });
     const formWrap = root.createDiv({ cls: "pl-form-wrap" });
     formWrap.createDiv({ cls: "pl-form-caption" }).setText("\u8BB0\u4E00\u7B14");
@@ -382,9 +458,9 @@ var LedgerBlockRenderer = class extends import_obsidian2.MarkdownRenderChild {
 };
 
 // ledger-view.ts
-var import_obsidian3 = require("obsidian");
+var import_obsidian4 = require("obsidian");
 var VIEW_TYPE = "pixel-ledger-view";
-var LedgerView = class extends import_obsidian3.ItemView {
+var LedgerView = class extends import_obsidian4.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     /** 当前展示的月份（任意日期，取当月） */
@@ -444,7 +520,7 @@ var LedgerView = class extends import_obsidian3.ItemView {
     title.createSpan({ cls: "pl-num" }).setText(`${year}.${pad(month + 1)}`);
     const nav = head.createDiv({ cls: "pl-header-nav" });
     const prev = nav.createEl("button", { cls: "pl-nav-btn" });
-    (0, import_obsidian3.setIcon)(prev, "chevron-left");
+    (0, import_obsidian4.setIcon)(prev, "chevron-left");
     prev.addEventListener("click", () => {
       const m = month - 1;
       this.setMonth(m < 0 ? year - 1 : year, m < 0 ? 11 : m);
@@ -457,7 +533,7 @@ var LedgerView = class extends import_obsidian3.ItemView {
       this.render();
     });
     const next = nav.createEl("button", { cls: "pl-nav-btn" });
-    (0, import_obsidian3.setIcon)(next, "chevron-right");
+    (0, import_obsidian4.setIcon)(next, "chevron-right");
     next.addEventListener("click", () => {
       const m = month + 1;
       this.setMonth(m > 11 ? year + 1 : year, m > 11 ? 0 : m);
@@ -544,46 +620,11 @@ var LedgerView = class extends import_obsidian3.ItemView {
     strip.createSpan({ cls: "pl-detail-total-label", text: ` \u652F\u51FA${fmtMoney(-t.expense)} / \u6536\u5165${fmtMoney(t.income)}` });
     const list = root.createDiv({ cls: "pl-detail-list" });
     renderEntryList(list, entries, {
-      onDelete: (id) => this.plugin.removeEntry(id)
+      onDelete: (entry) => new ConfirmDeleteModal(this.plugin, entry, () => this.plugin.removeEntry(entry.id)).open()
     });
   }
   async onClose() {
     this.contentEl.empty();
-  }
-};
-
-// ledger-modal.ts
-var import_obsidian4 = require("obsidian");
-var QuickAddModal = class extends import_obsidian4.Modal {
-  constructor(plugin, date) {
-    super(plugin.app);
-    this.plugin = plugin;
-    this.date = date != null ? date : todayStr();
-  }
-  onOpen() {
-    const { contentEl } = this;
-    contentEl.addClass("pl-modal");
-    contentEl.createDiv({ cls: "pl-modal-title" }).setText("\u5FEB\u901F\u8BB0\u4E00\u7B14");
-    new import_obsidian4.Setting(contentEl).setName("\u65E5\u671F").setDesc("\u9ED8\u8BA4\u4ECA\u5929\uFF0C\u53EF\u6539\u6210\u8FC7\u53BB\u7684\u65E5\u671F\u7528\u4E8E\u8865\u5F55").addText((t) => {
-      t.setValue(this.date);
-      t.inputEl.type = "date";
-      t.onChange((v) => {
-        if (v)
-          this.date = v;
-      });
-    });
-    const form = contentEl.createDiv({ cls: "pl-modal-form" });
-    renderQuickForm(form, {
-      presets: this.plugin.data.presets,
-      onSave: (r) => {
-        this.plugin.addEntry({ ...r, date: this.date });
-        this.close();
-      }
-    });
-  }
-  onClose() {
-    const { contentEl } = this;
-    contentEl.empty();
   }
 };
 

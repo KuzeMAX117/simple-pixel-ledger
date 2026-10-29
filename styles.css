@@ -580,3 +580,57 @@ body.theme-dark .pl-modal {
   background: var(--pl-accent);
   color: #fff;
 }
+
+/* ============ 删除二次确认弹窗 ============ */
+.pl-del-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 2px solid var(--pl-border);
+  border-radius: 0;
+  background: var(--pl-bg2);
+  padding: 10px 12px;
+  margin: 8px 0;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.12);
+}
+.pl-del-sign {
+  font-size: 13px;
+  min-width: 80px;
+  text-align: right;
+}
+.pl-del-info {
+  flex: 1;
+  min-width: 0;
+}
+.pl-del-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+.pl-del-note {
+  font-size: 12px;
+  color: var(--pl-muted);
+  margin-top: 2px;
+}
+.pl-del-date {
+  font-size: 11px;
+  color: var(--pl-muted);
+  margin-top: 2px;
+}
+.pl-del-tip {
+  font-size: 12px;
+  color: var(--pl-red);
+  margin: 6px 0 12px;
+}
+.pl-del-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.pl-btn-danger {
+  background: var(--pl-red);
+  border-color: var(--pl-red);
+  color: #fff;
+}
+.pl-btn-danger:hover {
+  background: #c92a2a;
+}

@@ -1,5 +1,6 @@
 import { MarkdownRenderChild } from "obsidian";
 import type PixelLedgerPlugin from "./main";
+import { ConfirmDeleteModal } from "./ledger-modal";
 import { CHANGE_EVENT, byTimeAsc, parseDate, todayStr, totalsOf } from "./store";
 import { renderEntryList, renderQuickForm, renderSummaryStrip } from "./shared";
 
@@ -65,7 +66,8 @@ class LedgerBlockRenderer extends MarkdownRenderChild {
 
     const listWrap = root.createDiv({ cls: "pl-block-list" });
     renderEntryList(listWrap, entries, {
-      onDelete: (id) => this.plugin.removeEntry(id),
+      onDelete: (entry) =>
+        new ConfirmDeleteModal(this.plugin, entry, () => this.plugin.removeEntry(entry.id)).open(),
     });
 
     const formWrap = root.createDiv({ cls: "pl-form-wrap" });

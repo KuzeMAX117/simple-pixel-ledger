@@ -1,5 +1,6 @@
 import { ItemView, WorkspaceLeaf, setIcon } from "obsidian";
 import type PixelLedgerPlugin from "./main";
+import { ConfirmDeleteModal } from "./ledger-modal";
 import {
   CHANGE_EVENT,
   EntryType,
@@ -200,7 +201,8 @@ export class LedgerView extends ItemView {
 
     const list = root.createDiv({ cls: "pl-detail-list" });
     renderEntryList(list, entries, {
-      onDelete: (id) => this.plugin.removeEntry(id),
+      onDelete: (entry) =>
+        new ConfirmDeleteModal(this.plugin, entry, () => this.plugin.removeEntry(entry.id)).open(),
     });
   }
 

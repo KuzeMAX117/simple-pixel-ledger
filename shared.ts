@@ -120,7 +120,8 @@ export function renderQuickForm(root: HTMLElement, opts: QuickFormOptions): void
 
 export interface EntryListOptions {
   showDate?: boolean;
-  onDelete?: (id: string) => void;
+  /** 回调传入完整条目，调用方自行决定是否二次确认 */
+  onDelete?: (entry: LedgerEntry) => void;
 }
 
 /** 渲染条目列表：+/- 金额（红绿）+ 分类 · 明细 + 备注 + 删除按钮 */
@@ -148,7 +149,7 @@ export function renderEntryList(root: HTMLElement, entries: LedgerEntry[], opts:
     if (opts.onDelete) {
       const del = row.createEl("button", { cls: "pl-del", attr: { "aria-label": "删除" } });
       del.setText("×");
-      del.addEventListener("click", () => opts.onDelete!(e.id));
+      del.addEventListener("click", () => opts.onDelete!(e));
     }
   }
 }

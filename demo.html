@@ -609,10 +609,80 @@ body.theme-dark .pl-modal {
   background: var(--pl-accent);
   color: #fff;
 }
+
+/* ============ 删除二次确认弹窗 ============ */
+.pl-del-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 2px solid var(--pl-border);
+  border-radius: 0;
+  background: var(--pl-bg2);
+  padding: 10px 12px;
+  margin: 8px 0;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.12);
+}
+.pl-del-sign {
+  font-size: 13px;
+  min-width: 80px;
+  text-align: right;
+}
+.pl-del-info {
+  flex: 1;
+  min-width: 0;
+}
+.pl-del-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+.pl-del-note {
+  font-size: 12px;
+  color: var(--pl-muted);
+  margin-top: 2px;
+}
+.pl-del-date {
+  font-size: 11px;
+  color: var(--pl-muted);
+  margin-top: 2px;
+}
+.pl-del-tip {
+  font-size: 12px;
+  color: var(--pl-red);
+  margin: 6px 0 12px;
+}
+.pl-del-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.pl-btn-danger {
+  background: var(--pl-red);
+  border-color: var(--pl-red);
+  color: #fff;
+}
+.pl-btn-danger:hover {
+  background: #c92a2a;
+}
+
+/* 演示页确认弹层（模拟插件内 Obsidian 确认弹窗） */
+.pl-demo-mask {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 999;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.pl-demo-dialog {
+  width: 360px; max-width: 92vw;
+  border: 2px solid #b6ae9e; border-radius: 0;
+  background: #f6f4ee; color: #26241f;
+  padding: 14px 16px;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.25);
+}
 </style>
 </head>
 <body>
-<div class="demo-banner"><b>演示界面</b> · 示例数据（非真实账单）· 与插件实际界面一致：红=支出/负收入，绿=收入/正收入，数字为像素风字体；点「分类/明细」弹出预设下拉，可直接点选或输入</div>
+<div class="demo-banner"><b>演示界面</b> · 示例数据（非真实账单）· 与插件实际界面一致：红=支出/负收入，绿=收入/正收入，数字为像素风字体；点「分类/明细」弹出预设下拉，可直接点选或输入；点条目「×」删除前会二次确认</div>
 <div class="pl-view" id="app"></div>
 <script>
 (function(){
@@ -693,7 +763,8 @@ body.theme-dark .pl-modal {
     if(!dayEntries.length)html+='<div class="pl-empty">还没有记录，先记一笔吧～</div>';
     dayEntries.forEach(function(e){
       html+='<div class="pl-entry pl-entry-'+e.type+'"><div class="pl-entry-sign pl-num '+(e.type==="income"?"pl-pos":"pl-neg")+'">'+(e.type==="income"?"+":"-")+fmt(e.amount)+'</div>';
-      html+='<div class="pl-entry-main"><div class="pl-entry-title">'+esc(e.category)+' · '+esc(e.detail)+'</div></div></div>';
+      html+='<div class="pl-entry-main"><div class="pl-entry-title">'+esc(e.category)+' · '+esc(e.detail)+'</div></div>';
+      html+='<button class="pl-del" data-idx="'+ENTRIES.indexOf(e)+'" aria-label="删除">×</button></div>';
     });
     html+='</div></div>';
 
@@ -714,9 +785,9 @@ body.theme-dark .pl-modal {
     return '<div class="pl-stat '+cls+'"><div class="pl-stat-label">'+label+'</div><div class="pl-stat-value pl-num">'+fmt(val)+'</div></div>';
   }
   function bind(){
-    var days=app.querySelectorAll(".pl-day[data-date]");
+        var days=app.querySelectorAll(".pl-day[data-date]");
     for(var i=0;i<days.length;i++)days[i].addEventListener("click",function(){selected=this.getAttribute("data-date");render();});
-    var navs=app.querySelectorAll("[data-nav]");
+        var navs=app.querySelectorAll("[data-nav]");
     for(i=0;i<navs.length;i++)navs[i].addEventListener("click",function(){
       var k=this.getAttribute("data-nav");
       if(k==="prev"){M--;if(M<0){M=11;Y--;}}
@@ -724,9 +795,9 @@ body.theme-dark .pl-modal {
       else {var t=new Date();Y=t.getFullYear();M=t.getMonth();selected=Y+"-"+pad(M+1)+"-"+pad(t.getDate());}
       render();
     });
-    var chips=app.querySelectorAll(".pl-chip");
+        var chips=app.querySelectorAll(".pl-chip");
     for(i=0;i<chips.length;i++)chips[i].addEventListener("click",function(){var a=app.querySelector(".pl-amount");a.value=this.getAttribute("data-amt");});
-
+    
     // 组合框：点击弹出预设下拉，可点选也可输入
     var curType="expense";
     var combos={};
@@ -763,6 +834,27 @@ body.theme-dark .pl-modal {
       segs.forEach(function(s){s.classList.remove("is-on");});
       this.classList.add("is-on");
       curType=this.getAttribute("data-type")||"expense";
+    });
+        // 删除二次确认：点 × 弹出像素风确认层（与插件内 Obsidian 确认弹窗一致），确认后才移除该条
+    var dels=app.querySelectorAll(".pl-del");
+        for(i=0;i<dels.length;i++)dels[i].addEventListener("click",function(){
+            var idx=parseInt(this.getAttribute("data-idx"),10);
+      var row=this.closest(".pl-entry");
+      var title=row?row.querySelector(".pl-entry-title").textContent:"未分类";
+      var sign=row?row.querySelector(".pl-entry-sign").textContent:"";
+      var date=row?selected:"";
+      var mask=document.createElement("div");mask.className="pl-demo-mask";
+      mask.innerHTML='<div class="pl-demo-dialog"><div class="pl-modal-title">删除这条记录？</div>'
+        +'<div class="pl-del-preview"><div class="pl-del-sign pl-num">'+sign+'</div>'
+        +'<div class="pl-del-info"><div class="pl-del-title">'+esc(title)+'</div><div class="pl-del-date">日期：'+date+'</div></div></div>'
+        +'<div class="pl-del-tip">删除后不可恢复。</div>'
+        +'<div class="pl-del-btns"><button class="pl-btn" id="dlgCancel">取消</button><button class="pl-btn pl-btn-danger" id="dlgOk">确认删除</button></div></div>';
+      document.body.appendChild(mask);
+      mask.querySelector("#dlgCancel").addEventListener("click",function(){mask.remove();});
+      mask.querySelector("#dlgOk").addEventListener("click",function(){
+        if(idx>=0&&idx<ENTRIES.length)ENTRIES.splice(idx,1);
+        mask.remove();render();
+      });
     });
     var save=document.getElementById("demoSave");
     if(save)save.addEventListener("click",function(){alert("演示环境：数据不会保存。安装插件后即可真实记账。");});
