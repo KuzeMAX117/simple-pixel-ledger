@@ -312,6 +312,38 @@ function renderEntryList(root, entries, opts = {}) {
     }
   }
 }
+function renderGroupedEntryList(root, entries, opts = {}) {
+  var _a;
+  root.empty();
+  root.addClass("pl-groups");
+  const state = (_a = opts.expandState) != null ? _a : { expense: false, income: false };
+  const expense = entries.filter((e) => e.type === "expense");
+  const income = entries.filter((e) => e.type === "income");
+  if (!entries.length) {
+    root.createDiv({ cls: "pl-empty", text: "\u8FD8\u6CA1\u6709\u8BB0\u5F55\uFF0C\u5148\u8BB0\u4E00\u7B14\u5427\uFF5E" });
+    return;
+  }
+  renderGroup(root, "\u652F\u51FA", expense, state, "expense", opts);
+  renderGroup(root, "\u6536\u5165", income, state, "income", opts);
+}
+function renderGroup(root, label, items, state, key, opts) {
+  const group = root.createDiv({ cls: "pl-group" + (state[key] ? " is-open" : "") });
+  const header = group.createEl("button", { cls: "pl-group-head", type: "button" });
+  header.createSpan({ cls: "pl-group-arrow", text: state[key] ? "\u25BC" : "\u25B6" });
+  header.createSpan({ cls: "pl-group-label " + (key === "expense" ? "pl-neg" : "pl-pos"), text: label });
+  const t = totalsOf(items);
+  const meta = header.createSpan({ cls: "pl-group-meta pl-num" });
+  meta.setText(
+    `${items.length}\u7B14 \xB7 ${key === "expense" ? "-" : "+"}${fmtMoney(t.income + t.expense)}`
+  );
+  header.addEventListener("click", () => {
+    const open = group.hasClass("is-open");
+    group.toggleClass("is-open", !open);
+    state[key] = !open;
+  });
+  const body = group.createDiv({ cls: "pl-group-body" });
+  renderEntryList(body, items, opts);
+}
 function renderSummaryStrip(root, income, expense) {
   root.empty();
   root.addClass("pl-strip");
@@ -420,6 +452,7 @@ function registerLedgerBlock(plugin) {
 var LedgerBlockRenderer = class extends import_obsidian3.MarkdownRenderChild {
   constructor(containerEl, plugin, date) {
     super(containerEl);
+    this.expandState = { expense: false, income: false };
     this.changeRef = () => {
     };
     this.plugin = plugin;
@@ -443,7 +476,8 @@ var LedgerBlockRenderer = class extends import_obsidian3.MarkdownRenderChild {
     const strip = root.createDiv({});
     renderSummaryStrip(strip, t.income, t.expense);
     const listWrap = root.createDiv({ cls: "pl-block-list" });
-    renderEntryList(listWrap, entries, {
+    renderGroupedEntryList(listWrap, entries, {
+      expandState: this.expandState,
       onDelete: (entry) => new ConfirmDeleteModal(this.plugin, entry, () => this.plugin.removeEntry(entry.id)).open()
     });
     const formWrap = root.createDiv({ cls: "pl-form-wrap" });
@@ -467,6 +501,9 @@ var LedgerView = class extends import_obsidian4.ItemView {
     this.cursor = new Date();
     /** 选中的日期 YYYY-MM-DD */
     this.selected = todayStr();
+    /** 分组折叠状态（切换日期时重置，删除记录后保持） */
+    this.expandState = { expense: false, income: false };
+    this.lastSelected = "";
     this.changeRef = () => {
     };
     this.plugin = plugin;
@@ -618,8 +655,13 @@ var LedgerView = class extends import_obsidian4.ItemView {
     const strip = root.createDiv({ cls: "pl-detail-total" });
     strip.createSpan({ cls: "pl-num " + moneyClass(t.income - t.expense), text: fmtMoney(t.income - t.expense) });
     strip.createSpan({ cls: "pl-detail-total-label", text: ` \u652F\u51FA${fmtMoney(-t.expense)} / \u6536\u5165${fmtMoney(t.income)}` });
+    if (this.lastSelected !== this.selected) {
+      this.expandState = { expense: false, income: false };
+      this.lastSelected = this.selected;
+    }
     const list = root.createDiv({ cls: "pl-detail-list" });
-    renderEntryList(list, entries, {
+    renderGroupedEntryList(list, entries, {
+      expandState: this.expandState,
       onDelete: (entry) => new ConfirmDeleteModal(this.plugin, entry, () => this.plugin.removeEntry(entry.id)).open()
     });
   }

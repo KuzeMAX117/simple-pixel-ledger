@@ -2,7 +2,7 @@ import { MarkdownRenderChild } from "obsidian";
 import type PixelLedgerPlugin from "./main";
 import { ConfirmDeleteModal } from "./ledger-modal";
 import { CHANGE_EVENT, byTimeAsc, parseDate, todayStr, totalsOf } from "./store";
-import { renderEntryList, renderQuickForm, renderSummaryStrip } from "./shared";
+import { renderEntryList, renderGroupedEntryList, renderQuickForm, renderSummaryStrip, GroupExpandState } from "./shared";
 
 export const BLOCK_TAG = "pixel-ledger";
 
@@ -30,6 +30,7 @@ export function registerLedgerBlock(plugin: PixelLedgerPlugin): void {
 class LedgerBlockRenderer extends MarkdownRenderChild {
   private plugin: PixelLedgerPlugin;
   private date: string;
+  private expandState: GroupExpandState = { expense: false, income: false };
   private changeRef: () => void = () => {};
 
   constructor(containerEl: HTMLElement, plugin: PixelLedgerPlugin, date: string) {
@@ -65,7 +66,8 @@ class LedgerBlockRenderer extends MarkdownRenderChild {
     renderSummaryStrip(strip, t.income, t.expense);
 
     const listWrap = root.createDiv({ cls: "pl-block-list" });
-    renderEntryList(listWrap, entries, {
+    renderGroupedEntryList(listWrap, entries, {
+      expandState: this.expandState,
       onDelete: (entry) =>
         new ConfirmDeleteModal(this.plugin, entry, () => this.plugin.removeEntry(entry.id)).open(),
     });

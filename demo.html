@@ -664,6 +664,56 @@ body.theme-dark .pl-modal {
   background: #c92a2a;
 }
 
+/* ============ 分组折叠明细（支出/收入） ============ */
+.pl-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pl-group {
+  border: 1px solid var(--pl-border);
+  border-radius: 0;
+}
+.pl-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  background: var(--pl-bg2);
+  color: var(--pl-text);
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+}
+.pl-group-head:hover {
+  background: var(--pl-bg);
+}
+.pl-group-arrow {
+  font-size: 10px;
+  color: var(--pl-muted);
+  width: 12px;
+  flex-shrink: 0;
+}
+.pl-group-label {
+  font-weight: 700;
+}
+.pl-group-meta {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--pl-muted);
+  white-space: nowrap;
+}
+.pl-group-body {
+  display: none;
+  padding: 4px;
+}
+.pl-group.is-open .pl-group-body {
+  display: block;
+}
+
 /* 演示页确认弹层（模拟插件内 Obsidian 确认弹窗） */
 .pl-demo-mask {
   position: fixed; inset: 0;
@@ -682,7 +732,7 @@ body.theme-dark .pl-modal {
 </style>
 </head>
 <body>
-<div class="demo-banner"><b>演示界面</b> · 示例数据（非真实账单）· 与插件实际界面一致：红=支出/负收入，绿=收入/正收入，数字为像素风字体；点「分类/明细」弹出预设下拉，可直接点选或输入；点条目「×」删除前会二次确认</div>
+<div class="demo-banner"><b>演示界面</b> · 示例数据（非真实账单）· 与插件实际界面一致：红=支出/负收入，绿=收入/正收入，数字为像素风字体；收支明细按「支出/收入」分组折叠，点击标题展开/收起；点条目「×」删除前会二次确认</div>
 <div class="pl-view" id="app"></div>
 <script>
 (function(){
@@ -713,6 +763,7 @@ body.theme-dark .pl-modal {
   };
   var Y=2026, M=9; // 2026-10
   var selected = "2026-10-29";
+  var dayExpand={expense:false,income:false}; // 分组折叠状态（同一天内删除后保持）
   function pad(n){return n<10?"0"+n:String(n);}
   function totals(es){var i=0,e=0;es.forEach(function(x){if(x.type==="income")i+=x.amount;else e+=x.amount;});return {income:i,expense:e,net:i-e};}
   function fmt(n){var neg=n<0;var s=Math.abs(n).toLocaleString("zh-CN",{minimumFractionDigits:2,maximumFractionDigits:2});return (neg?"-":"")+"¥"+s;}
@@ -759,13 +810,33 @@ body.theme-dark .pl-modal {
     var dt=totals(dayEntries);
     html+='<div class="pl-detail-wrap"><div class="pl-detail-title"><span>'+(pdDate.getMonth()+1)+'月'+pdDate.getDate()+'日 收支明细</span>'+(selected===today?'<span class="pl-badge">今天</span>':'')+'</div>';
     html+='<div class="pl-detail-total"><span class="pl-num '+moneyClass(dt.net)+'">'+fmt(dt.net)+'</span><span class="pl-detail-total-label">  支出'+fmt(-dt.expense)+' / 收入'+fmt(dt.income)+'</span></div>';
-    html+='<div class="pl-entries">';
-    if(!dayEntries.length)html+='<div class="pl-empty">还没有记录，先记一笔吧～</div>';
-    dayEntries.forEach(function(e){
-      html+='<div class="pl-entry pl-entry-'+e.type+'"><div class="pl-entry-sign pl-num '+(e.type==="income"?"pl-pos":"pl-neg")+'">'+(e.type==="income"?"+":"-")+fmt(e.amount)+'</div>';
-      html+='<div class="pl-entry-main"><div class="pl-entry-title">'+esc(e.category)+' · '+esc(e.detail)+'</div></div>';
-      html+='<button class="pl-del" data-idx="'+ENTRIES.indexOf(e)+'" aria-label="删除">×</button></div>';
-    });
+    // 分组折叠明细：默认只显示「支出/收入」两组标题，点击展开/折叠
+    html+='<div class="pl-groups">';
+    if(!dayEntries.length){
+      html+='<div class="pl-empty">还没有记录，先记一笔吧～</div>';
+    } else {
+      var groups=[["支出","expense","pl-neg"],["收入","income","pl-pos"]];
+      for(var gi=0;gi<groups.length;gi++){
+        var gLabel=groups[gi][0],gKey=groups[gi][1],gCls=groups[gi][2];
+        var gItems=dayEntries.filter(function(e){return e.type===(gKey==="expense"?"expense":"income");});
+        if(!gItems.length)continue;
+        var gOpen=dayExpand[gKey];
+        var gTot=totals(gItems);
+        var gSign=gKey==="expense"?"-":"+";
+        html+='<div class="pl-group'+(gOpen?" is-open":"")+'" data-group="'+gKey+'">'
+          +'<button class="pl-group-head" type="button" data-toggle="'+gKey+'">'
+          +'<span class="pl-group-arrow">'+(gOpen?"▼":"▶")+'</span>'
+          +'<span class="pl-group-label '+gCls+'">'+gLabel+'</span>'
+          +'<span class="pl-group-meta pl-num">'+gItems.length+'笔 · '+gSign+fmt(gTot.income+gTot.expense)+'</span>'
+          +'</button><div class="pl-group-body">';
+        gItems.forEach(function(e){
+          html+='<div class="pl-entry pl-entry-'+e.type+'"><div class="pl-entry-sign pl-num '+(e.type==="income"?"pl-pos":"pl-neg")+'">'+(e.type==="income"?"+":"-")+fmt(e.amount)+'</div>';
+          html+='<div class="pl-entry-main"><div class="pl-entry-title">'+esc(e.category)+' · '+esc(e.detail)+'</div></div>';
+          html+='<button class="pl-del" data-idx="'+ENTRIES.indexOf(e)+'" aria-label="删除">×</button></div>';
+        });
+        html+='</div></div>';
+      }
+    }
     html+='</div></div>';
 
     // 快速记账表单（演示）：分类/明细为组合框，点击弹下拉、可点选也可直接输入
@@ -835,9 +906,16 @@ body.theme-dark .pl-modal {
       this.classList.add("is-on");
       curType=this.getAttribute("data-type")||"expense";
     });
-        // 删除二次确认：点 × 弹出像素风确认层（与插件内 Obsidian 确认弹窗一致），确认后才移除该条
+    // 分组折叠：点击「支出/收入」标题展开或折叠
+    var toggles=app.querySelectorAll(".pl-group-head");
+    for(i=0;i<toggles.length;i++)toggles[i].addEventListener("click",function(){
+      var key=this.getAttribute("data-toggle");
+      dayExpand[key]=!dayExpand[key];
+      render();
+    });
+    // 删除二次确认：点 × 弹出像素风确认层（与插件内 Obsidian 确认弹窗一致），确认后才移除该条
     var dels=app.querySelectorAll(".pl-del");
-        for(i=0;i<dels.length;i++)dels[i].addEventListener("click",function(){
+    for(i=0;i<dels.length;i++)dels[i].addEventListener("click",function(){
             var idx=parseInt(this.getAttribute("data-idx"),10);
       var row=this.closest(".pl-entry");
       var title=row?row.querySelector(".pl-entry-title").textContent:"未分类";

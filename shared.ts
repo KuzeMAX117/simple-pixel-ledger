@@ -1,4 +1,4 @@
-import { LedgerEntry, Presets } from "./store";
+import { LedgerEntry, Presets, totalsOf } from "./store";
 import { ComboBox } from "./combo";
 
 /** 金额格式化：¥1,234.50；负数带 - 号 */
@@ -152,6 +152,70 @@ export function renderEntryList(root: HTMLElement, entries: LedgerEntry[], opts:
       del.addEventListener("click", () => opts.onDelete!(e));
     }
   }
+}
+
+/** 分组折叠展开状态：调用方持有引用，重渲染后保持 */
+export interface GroupExpandState {
+  expense: boolean;
+  income: boolean;
+}
+
+export interface GroupedListOptions {
+  showDate?: boolean;
+  onDelete?: (entry: LedgerEntry) => void;
+  /** 传入后跨重渲染保持展开状态 */
+  expandState?: GroupExpandState;
+}
+
+/**
+ * 渲染分组折叠明细：默认只显示「支出 / 收入」两个分组标题（含笔数与合计金额），
+ * 点击组标题展开具体条目，再点折叠回去。记录多时不遮挡其他区域。
+ */
+export function renderGroupedEntryList(
+  root: HTMLElement,
+  entries: LedgerEntry[],
+  opts: GroupedListOptions = {}
+): void {
+  root.empty();
+  root.addClass("pl-groups");
+  const state: GroupExpandState = opts.expandState ?? { expense: false, income: false };
+  const expense = entries.filter((e) => e.type === "expense");
+  const income = entries.filter((e) => e.type === "income");
+  if (!entries.length) {
+    root.createDiv({ cls: "pl-empty", text: "还没有记录，先记一笔吧～" });
+    return;
+  }
+  renderGroup(root, "支出", expense, state, "expense", opts);
+  renderGroup(root, "收入", income, state, "income", opts);
+}
+
+function renderGroup(
+  root: HTMLElement,
+  label: "支出" | "收入",
+  items: LedgerEntry[],
+  state: GroupExpandState,
+  key: "expense" | "income",
+  opts: GroupedListOptions
+): void {
+  const group = root.createDiv({ cls: "pl-group" + (state[key] ? " is-open" : "") });
+  const header = group.createEl("button", { cls: "pl-group-head", type: "button" });
+  header.createSpan({ cls: "pl-group-arrow", text: state[key] ? "▼" : "▶" });
+  header.createSpan({ cls: "pl-group-label " + (key === "expense" ? "pl-neg" : "pl-pos"), text: label });
+
+  const t = totalsOf(items);
+  const meta = header.createSpan({ cls: "pl-group-meta pl-num" });
+  meta.setText(
+    `${items.length}笔 · ${key === "expense" ? "-" : "+"}${fmtMoney(t.income + t.expense)}`
+  );
+
+  header.addEventListener("click", () => {
+    const open = group.hasClass("is-open");
+    group.toggleClass("is-open", !open);
+    state[key] = !open;
+  });
+
+  const body = group.createDiv({ cls: "pl-group-body" });
+  renderEntryList(body, items, opts);
 }
 
 /** 渲染汇总条：支出（红）/ 收入（绿）/ 结余 */

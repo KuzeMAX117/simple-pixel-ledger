@@ -13,7 +13,7 @@ import {
   totalsOf,
   pad,
 } from "./store";
-import { fmtMoney, moneyClass, renderEntryList, renderQuickForm, renderSummaryStrip } from "./shared";
+import { fmtMoney, moneyClass, renderEntryList, renderGroupedEntryList, renderQuickForm, renderSummaryStrip, GroupExpandState } from "./shared";
 
 export const VIEW_TYPE = "pixel-ledger-view";
 
@@ -23,6 +23,9 @@ export class LedgerView extends ItemView {
   private cursor: Date = new Date();
   /** 选中的日期 YYYY-MM-DD */
   private selected: string = todayStr();
+  /** 分组折叠状态（切换日期时重置，删除记录后保持） */
+  private expandState: GroupExpandState = { expense: false, income: false };
+  private lastSelected: string = "";
   private changeRef: () => void = () => {};
 
   constructor(leaf: WorkspaceLeaf, plugin: PixelLedgerPlugin) {
@@ -199,8 +202,15 @@ export class LedgerView extends ItemView {
     strip.createSpan({ cls: "pl-num " + moneyClass(t.income - t.expense), text: fmtMoney(t.income - t.expense) });
     strip.createSpan({ cls: "pl-detail-total-label", text: ` 支出${fmtMoney(-t.expense)} / 收入${fmtMoney(t.income)}` });
 
+    // 切换日期时重置折叠状态；同一天内（含删除）保持展开状态
+    if (this.lastSelected !== this.selected) {
+      this.expandState = { expense: false, income: false };
+      this.lastSelected = this.selected;
+    }
+
     const list = root.createDiv({ cls: "pl-detail-list" });
-    renderEntryList(list, entries, {
+    renderGroupedEntryList(list, entries, {
+      expandState: this.expandState,
       onDelete: (entry) =>
         new ConfirmDeleteModal(this.plugin, entry, () => this.plugin.removeEntry(entry.id)).open(),
     });
