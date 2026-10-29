@@ -2,7 +2,7 @@ import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
 
-const banner = `/* Pixel Ledger 像素账本 1.0.0 | OFL: Press Start 2P font embedded in styles.css */`;
+const banner = `/* Trace Wallet 追溯钱包 1.0.0 | OFL: Press Start 2P font embedded in styles.css */`;
 
 const prod = process.argv[2] === "production";
 

@@ -15,7 +15,7 @@ import {
 } from "./store";
 import { fmtMoney, moneyClass, renderEntryList, renderGroupedEntryList, renderQuickForm, renderSummaryStrip, GroupExpandState } from "./shared";
 
-export const VIEW_TYPE = "pixel-ledger-view";
+export const VIEW_TYPE = "trace-wallet-view";
 
 export class LedgerView extends ItemView {
   plugin: PixelLedgerPlugin;
@@ -38,7 +38,7 @@ export class LedgerView extends ItemView {
   }
 
   getDisplayText(): string {
-    return "像素账本";
+    return "追溯钱包";
   }
 
   getIcon(): string {

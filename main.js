@@ -1,4 +1,4 @@
-/* Pixel Ledger 像素账本 1.0.0 | OFL: Press Start 2P font embedded in styles.css */
+/* Trace Wallet 追溯钱包 1.0.0 | OFL: Press Start 2P font embedded in styles.css */
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -78,7 +78,7 @@ function byTimeAsc(a, b) {
   return (a.createdAt || 0) - (b.createdAt || 0);
 }
 var WEEKDAYS = ["\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D", "\u65E5"];
-var CHANGE_EVENT = "pixel-ledger:changed";
+var CHANGE_EVENT = "trace-wallet:changed";
 function deepMergePresets(p) {
   return {
     expenseCategories: Array.isArray(p == null ? void 0 : p.expenseCategories) ? p.expenseCategories : [...DEFAULT_PRESETS.expenseCategories],
@@ -431,9 +431,10 @@ var ConfirmDeleteModal = class extends import_obsidian2.Modal {
 };
 
 // ledger-block.ts
-var BLOCK_TAG = "pixel-ledger";
+var BLOCK_TAG = "trace-wallet";
+var LEGACY_BLOCK_TAG = "pixel-ledger";
 function registerLedgerBlock(plugin) {
-  plugin.registerMarkdownCodeBlockProcessor(BLOCK_TAG, (source, el, ctx) => {
+  const processor = (source, el, ctx) => {
     var _a;
     let date = todayStr();
     const param = /date\s*:\s*(\d{4}-\d{2}-\d{2})/.exec(source);
@@ -447,7 +448,9 @@ function registerLedgerBlock(plugin) {
     }
     const renderer = new LedgerBlockRenderer(el, plugin, date);
     ctx.addChild(renderer);
-  });
+  };
+  plugin.registerMarkdownCodeBlockProcessor(BLOCK_TAG, processor);
+  plugin.registerMarkdownCodeBlockProcessor(LEGACY_BLOCK_TAG, processor);
 }
 var LedgerBlockRenderer = class extends import_obsidian3.MarkdownRenderChild {
   constructor(containerEl, plugin, date) {
@@ -493,7 +496,7 @@ var LedgerBlockRenderer = class extends import_obsidian3.MarkdownRenderChild {
 
 // ledger-view.ts
 var import_obsidian4 = require("obsidian");
-var VIEW_TYPE = "pixel-ledger-view";
+var VIEW_TYPE = "trace-wallet-view";
 var LedgerView = class extends import_obsidian4.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
@@ -512,7 +515,7 @@ var LedgerView = class extends import_obsidian4.ItemView {
     return VIEW_TYPE;
   }
   getDisplayText() {
-    return "\u50CF\u7D20\u8D26\u672C";
+    return "\u8FFD\u6EAF\u94B1\u5305";
   }
   getIcon() {
     return "calculator";
@@ -676,12 +679,12 @@ var PixelLedgerPlugin = class extends import_obsidian5.Plugin {
   async onload() {
     await this.loadData();
     this.registerView(VIEW_TYPE, (leaf) => new LedgerView(leaf, this));
-    this.addRibbonIcon("calculator", "\u6253\u5F00\u50CF\u7D20\u8D26\u672C", () => {
+    this.addRibbonIcon("calculator", "\u6253\u5F00\u8FFD\u6EAF\u94B1\u5305", () => {
       void this.activateView();
     });
     this.addCommand({
       id: "open-view",
-      name: "\u6253\u5F00\u50CF\u7D20\u8D26\u672C\uFF08\u6708\u5386\u8D22\u52A1\u7EDF\u8BA1\u89C6\u56FE\uFF09",
+      name: "\u6253\u5F00\u8FFD\u6EAF\u94B1\u5305\uFF08\u6708\u5386\u8D22\u52A1\u7EDF\u8BA1\u89C6\u56FE\uFF09",
       callback: () => void this.activateView()
     });
     this.addCommand({
@@ -764,7 +767,7 @@ var LedgerSettingsTab = class extends import_obsidian5.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "\u50CF\u7D20\u8D26\u672C \xB7 \u5E38\u7528\u9884\u8BBE" });
+    containerEl.createEl("h2", { text: "\u8FFD\u6EAF\u94B1\u5305 \xB7 \u5E38\u7528\u9884\u8BBE" });
     containerEl.createEl("p", {
       text: "\u70B9\u300C\uFF0B\u300D\u6DFB\u52A0\u3001\u70B9\u300C\xD7\u300D\u5220\u9664\uFF0C\u6539\u52A8\u7ACB\u5373\u751F\u6548\u5E76\u540C\u6B65\u5237\u65B0\u6240\u6709\u754C\u9762\u3002\u8BB0\u8D26\u65F6\u70B9\u51FB\u5206\u7C7B/\u660E\u7EC6\u4F1A\u5F39\u51FA\u4E0B\u62C9\u6846\uFF0C\u53EF\u76F4\u63A5\u70B9\u9009\uFF0C\u4E5F\u53EF\u8F93\u5165\u65B0\u5185\u5BB9\u3002",
       cls: "setting-item-description"

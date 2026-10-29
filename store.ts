@@ -97,7 +97,7 @@ export function byTimeDesc(a: LedgerEntry, b: LedgerEntry): number {
 export const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 
 /** 触发全局刷新事件 */
-export const CHANGE_EVENT = "pixel-ledger:changed";
+export const CHANGE_EVENT = "trace-wallet:changed";
 
 export function deepMergePresets(p: Partial<Presets> | undefined): Presets {
   return {

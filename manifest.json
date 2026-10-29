@@ -1,10 +1,10 @@
 {
-  "id": "pixel-ledger",
-  "name": "Pixel Ledger 像素账本",
+  "id": "trace-wallet",
+  "name": "追溯钱包",
   "version": "1.0.0",
-  "minAppVersion": "1.0.0",
-  "description": "在日记或任意笔记中记录收支：分类/明细/金额支持常用预设，自动汇总当天总额；独立视图提供月历红绿盈亏统计（红=支出/负收入，绿=收入/正收入），数字采用像素风字体。",
-  "author": "pixel-ledger",
-  "authorUrl": "",
+  "minAppVersion": "1.4.0",
+  "description": "追溯钱包，Obsidian月历可视化记账插件，回溯查看历史收支流水，本地存储，支持侧边栏、主面板Tab打开，快速记账，日记代码块嵌入收支记录，trace-wallet个人财务工具。",
+  "author": "KuzeMAX117",
+  "authorUrl": "https://github.com/KuzeMAX117",
   "isDesktopOnly": false
 }

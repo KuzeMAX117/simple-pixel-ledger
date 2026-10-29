@@ -1,13 +1,13 @@
 {
-  "name": "pixel-ledger",
+  "name": "trace-wallet",
   "version": "1.0.0",
-  "description": "Obsidian 收支记账插件：日记内嵌收支面板 + 独立月历财务统计视图，像素风数字字体。",
+  "description": "Obsidian 月历可视化记账插件：回溯历史收支流水，本地存储，侧边栏/主面板 Tab 打开，快速记账，日记代码块嵌入收支记录。",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
   },
-  "keywords": ["obsidian", "plugin", "ledger", "finance", "expense"],
+  "keywords": ["obsidian", "plugin", "trace-wallet", "wallet", "ledger", "finance", "expense"],
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^16.11.6",

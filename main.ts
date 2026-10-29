@@ -31,13 +31,13 @@ export default class PixelLedgerPlugin extends Plugin {
     // 独立财务统计视图（类似 TODO 侧边栏，可固定到右侧）
     this.registerView(VIEW_TYPE, (leaf) => new LedgerView(leaf, this));
 
-    this.addRibbonIcon("calculator", "打开像素账本", () => {
+    this.addRibbonIcon("calculator", "打开追溯钱包", () => {
       void this.activateView();
     });
 
     this.addCommand({
       id: "open-view",
-      name: "打开像素账本（月历财务统计视图）",
+      name: "打开追溯钱包（月历财务统计视图）",
       callback: () => void this.activateView(),
     });
 
@@ -139,7 +139,7 @@ class LedgerSettingsTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "像素账本 · 常用预设" });
+    containerEl.createEl("h2", { text: "追溯钱包 · 常用预设" });
     containerEl.createEl("p", {
       text: "点「＋」添加、点「×」删除，改动立即生效并同步刷新所有界面。记账时点击分类/明细会弹出下拉框，可直接点选，也可输入新内容。",
       cls: "setting-item-description",

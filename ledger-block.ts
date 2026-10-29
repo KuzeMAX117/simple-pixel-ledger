@@ -1,14 +1,16 @@
-import { MarkdownRenderChild } from "obsidian";
+import { MarkdownRenderChild, MarkdownPostProcessorContext } from "obsidian";
 import type PixelLedgerPlugin from "./main";
 import { ConfirmDeleteModal } from "./ledger-modal";
 import { CHANGE_EVENT, byTimeAsc, parseDate, todayStr, totalsOf } from "./store";
 import { renderEntryList, renderGroupedEntryList, renderQuickForm, renderSummaryStrip, GroupExpandState } from "./shared";
 
-export const BLOCK_TAG = "pixel-ledger";
+export const BLOCK_TAG = "trace-wallet";
+/** 旧版代码块标签：历史日记里的 pixel-ledger 面板继续可用 */
+export const LEGACY_BLOCK_TAG = "pixel-ledger";
 
 /** 代码块处理器：在日记/任意笔记中渲染当日收支面板 */
 export function registerLedgerBlock(plugin: PixelLedgerPlugin): void {
-  plugin.registerMarkdownCodeBlockProcessor(BLOCK_TAG, (source, el, ctx) => {
+  const processor = (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
     // 1. 确定面板日期：优先块内参数 date: YYYY-MM-DD
     //    其次尝试从笔记文件名解析（日记模板通常命名如 2026-10-29.md）
     //    最后回退到今天
@@ -24,7 +26,10 @@ export function registerLedgerBlock(plugin: PixelLedgerPlugin): void {
 
     const renderer = new LedgerBlockRenderer(el, plugin, date);
     ctx.addChild(renderer);
-  });
+  };
+  plugin.registerMarkdownCodeBlockProcessor(BLOCK_TAG, processor);
+  // 兼容旧标签，老笔记无需改动
+  plugin.registerMarkdownCodeBlockProcessor(LEGACY_BLOCK_TAG, processor);
 }
 
 class LedgerBlockRenderer extends MarkdownRenderChild {
